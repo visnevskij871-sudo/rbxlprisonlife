@@ -1,3 +1,9 @@
+-- ==============================================================
+-- 🚀 RBXL CHEATS - Prison Life v2.1 (Optimized & Enhanced)
+-- 🔒 Официальный канал: https://t.me/rbxlcheats
+-- ⚠️ Используйте на свой страх и риск. Все скрипты — из открытых источников.
+-- ==============================================================
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -5,8 +11,9 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
+-- ==================== СИСТЕМА КЛЮЧЕЙ ====================
 local KeySystem = {
-	_validKey = "PRISON-LIFE-FREE", -- ✅ Ключ для активации
+	_validKey = "PRISON-LIFE-FREE",
 	_activated = false
 }
 
@@ -24,6 +31,7 @@ function KeySystem:IsValid()
 	return self._activated
 end
 
+-- ==================== АНТИБАН ====================
 local AntiBan = {
 	_lastUpdate = tick(),
 	_safeActions = 0,
@@ -33,14 +41,14 @@ local AntiBan = {
 
 function AntiBan:SimulateHumanBehavior()
 	if not self._protectionEnabled then return end
-	if self._randomDelays and math.random(1, 100) < 30 then
-		wait(math.random(0.1, 0.3))
+	if self._randomDelays and math.random(1, 100) < 25 then
+		wait(math.random(0.05, 0.2))
 	end
 	local currentTime = tick()
-	if currentTime - self._lastUpdate < 0.1 then
+	if currentTime - self._lastUpdate < 0.08 then
 		self._safeActions = self._safeActions + 1
-		if self._safeActions > 8 then
-			wait(0.2)
+		if self._safeActions > 10 then
+			wait(0.15)
 		end
 	else
 		self._safeActions = 0
@@ -55,35 +63,42 @@ function AntiBan:ProtectScript()
 	end)
 end
 
+-- ==================== ОСНОВНОЙ ИНСТРУМЕНТ ====================
 local PrisonTool = {
+	Version = "v2.1",
 	HitBoxEnabled = false,
 	FlyEnabled = false,
 	NoClipEnabled = false,
 	GhostEnabled = false,
 
-	HitBoxColor = Color3.fromRGB(255, 0, 0),
-	HitBoxTransparency = 0.7,
-	MaxHitBoxDistance = 300,
+	HitBoxColor = Color3.fromRGB(255, 50, 50),
+	HitBoxTransparency = 0.65,
+	MaxHitBoxDistance = 1500, -- ✅ Увеличено до 1500 метров
 
 	HitBoxes = {},
 	BodyVelocity = nil,
 	Connections = {},
 	UIMinimized = false,
 	CurrentTab = "main",
-	GUIInitialized = false -- ✅ Флаг для предотвращения дублирования GUI
+	GUIInitialized = false,
+	Dragging = false,
+	DragStart = nil,
+	FrameStart = nil
 }
 
+-- ==================== HITBOX ====================
 function PrisonTool:ToggleHitBox()
 	if not KeySystem:IsValid() then return end
 	self.HitBoxEnabled = not self.HitBoxEnabled
 	if self.HitBoxEnabled then
-		self.Connections.hitbox = RunService.Heartbeat:Connect(function()
+		self.Connections.hitbox = RunService.RenderStepped:Connect(function()
 			AntiBan:SimulateHumanBehavior()
 			self:UpdateHitBox()
 		end)
 	else
 		if self.Connections.hitbox then
 			self.Connections.hitbox:Disconnect()
+			self.Connections.hitbox = nil
 		end
 		self:ClearHitBox()
 	end
@@ -103,14 +118,24 @@ function PrisonTool:UpdateHitBox()
 			end
 		end
 	end
+
+	-- Удаляем hitbox'ы для отключённых игроков
+	for otherPlayer, hitBox in pairs(self.HitBoxes) do
+		if not otherPlayer or not otherPlayer.Character or not Players:GetPlayerFromCharacter(otherPlayer.Character) then
+			if hitBox and hitBox.Parent then hitBox:Destroy() end
+			self.HitBoxes[otherPlayer] = nil
+		end
+	end
 end
 
 function PrisonTool:CreateOrUpdateHitBox(otherPlayer, character, playerRoot)
+	if not otherPlayer or not character or not playerRoot then return end
+
 	local hitBox = self.HitBoxes[otherPlayer]
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character:FindFirstChild("Humanoid")
 
-	if not rootPart or not humanoid then
+	if not rootPart or not humanoid or not humanoid.Health then
 		if hitBox then hitBox:Destroy() end
 		self.HitBoxes[otherPlayer] = nil
 		return
@@ -128,12 +153,11 @@ function PrisonTool:CreateOrUpdateHitBox(otherPlayer, character, playerRoot)
 		highlight.Name = "PlayerHitBox"
 		highlight.FillColor = self.HitBoxColor
 		highlight.FillTransparency = self.HitBoxTransparency
-		highlight.OutlineColor = Color3.fromRGB(255, 50, 50)
-		highlight.OutlineTransparency = 0.2
+		highlight.OutlineColor = Color3.fromRGB(255, 100, 100)
+		highlight.OutlineTransparency = 0.3
 		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		highlight.Adornee = character
 		highlight.Parent = character
-
 		self.HitBoxes[otherPlayer] = highlight
 	end
 
@@ -148,58 +172,61 @@ function PrisonTool:CreateOrUpdateHitBox(otherPlayer, character, playerRoot)
 		if not billboard then
 			billboard = Instance.new("BillboardGui")
 			billboard.Name = "InfoBillboard"
-			billboard.Size = UDim2.new(0, 150, 0, 50)
+			billboard.Size = UDim2.new(0, 160, 0, 50)
 			billboard.StudsOffset = Vector3.new(0, 4, 0)
 			billboard.AlwaysOnTop = true
+			billboard.LightInfluence = 0
+			billboard.ResetOnSpawn = false
 			billboard.Adornee = rootPart
 			billboard.Parent = hitBox
 
-			local background = Instance.new("Frame")
-			background.Size = UDim2.new(1, 0, 1, 0)
-			background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-			background.BackgroundTransparency = 0.4
-			background.BorderSizePixel = 0
-			background.Parent = billboard
+			local bg = Instance.new("Frame")
+			bg.Size = UDim2.new(1, 0, 1, 0)
+			bg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+			bg.BackgroundTransparency = 0.6
+			bg.BorderSizePixel = 0
+			bg.Parent = billboard
 
 			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(0, 4)
-			corner.Parent = background
+			corner.CornerRadius = UDim.new(0, 5)
+			corner.Parent = bg
 
 			local nameLabel = Instance.new("TextLabel")
 			nameLabel.Size = UDim2.new(1, 0, 0, 20)
-			nameLabel.Position = UDim2.new(0, 0, 0, 0)
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Text = otherPlayer.Name
 			nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-			nameLabel.TextSize = 10
+			nameLabel.TextSize = 11
 			nameLabel.Font = Enum.Font.GothamBold
 			nameLabel.Parent = billboard
 
 			local infoLabel = Instance.new("TextLabel")
+			infoLabel.Name = "HPDistanceLabel"
 			infoLabel.Size = UDim2.new(1, 0, 0, 20)
-			infoLabel.Position = UDim2.new(0, 0, 0, 20)
+			infoLabel.Position = UDim2.new(0, 0, 0, 22)
 			infoLabel.BackgroundTransparency = 1
 			infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-			infoLabel.TextSize = 9
+			infoLabel.TextSize = 10
 			infoLabel.Font = Enum.Font.Gotham
 			infoLabel.Parent = billboard
 		end
 
-		local infoLabel = billboard:FindFirstChild("TextLabel")
+		local infoLabel = billboard:FindFirstChild("HPDistanceLabel")
 		if infoLabel then
-			infoLabel.Text = string.format("❤️ %dHP | 📏 %dm", health, math.floor(distance))
-			infoLabel.TextColor3 = health < 30 and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(50, 255, 50)
+			infoLabel.Text = string.format("❤️ %d HP | 📏 %d м", health, math.floor(distance))
+			infoLabel.TextColor3 = health < 30 and Color3.fromRGB(255, 70, 70) or Color3.fromRGB(70, 255, 100)
 		end
 	end
 end
 
 function PrisonTool:ClearHitBox()
 	for _, hitBox in pairs(self.HitBoxes) do
-		hitBox:Destroy()
+		if hitBox and hitBox.Parent then hitBox:Destroy() end
 	end
 	self.HitBoxes = {}
 end
 
+-- ==================== ПОЛЁТ ====================
 function PrisonTool:ToggleFly()
 	if not KeySystem:IsValid() then return end
 	self.FlyEnabled = not self.FlyEnabled
@@ -209,43 +236,61 @@ function PrisonTool:ToggleFly()
 	if not humanoidRootPart then return end
 
 	if self.FlyEnabled then
+		if character:FindFirstChildOfClass("Humanoid") then
+			character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+		end
+
 		self.BodyVelocity = Instance.new("BodyVelocity")
-		self.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+		self.BodyVelocity.Velocity = Vector3.zero
 		self.BodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
 		self.BodyVelocity.Parent = humanoidRootPart
 
-		self.Connections.fly = RunService.Heartbeat:Connect(function()
+		self.Connections.fly = RunService.RenderStepped:Connect(function()
 			if not self.FlyEnabled or not humanoidRootPart.Parent then
 				self:ToggleFly()
 				return
 			end
 
 			local camera = workspace.CurrentCamera
-			local direction = Vector3.new()
+			if not camera then return end
 
-			if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - camera.CFrame.RightVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + camera.CFrame.RightVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
-			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+			local direction = Vector3.zero
+			local speed = 100
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction -= camera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += camera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0, 1, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction -= Vector3.new(0, 1, 0) end
 
 			if direction.Magnitude > 0 then
-				direction = direction.Unit * 50
+				direction = direction.Unit * speed
 			end
 			self.BodyVelocity.Velocity = direction
 		end)
 	else
-		if self.BodyVelocity then self.BodyVelocity:Destroy() end
-		if self.Connections.fly then self.Connections.fly:Disconnect() end
+		if self.BodyVelocity then
+			self.BodyVelocity:Destroy()
+			self.BodyVelocity = nil
+		end
+		if self.Connections.fly then
+			self.Connections.fly:Disconnect()
+			self.Connections.fly = nil
+		end
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.PlatformStand = false
+		end
 	end
 end
 
+-- ==================== NOCLIP ====================
 function PrisonTool:ToggleNoClip()
 	if not KeySystem:IsValid() then return end
 	self.NoClipEnabled = not self.NoClipEnabled
 	if self.NoClipEnabled then
-		self.Connections.noclip = RunService.Heartbeat:Connect(function()
+		self.Connections.noclip = RunService.RenderStepped:Connect(function()
 			local character = player.Character
 			if character then
 				for _, part in pairs(character:GetDescendants()) do
@@ -256,7 +301,10 @@ function PrisonTool:ToggleNoClip()
 			end
 		end)
 	else
-		if self.Connections.noclip then self.Connections.noclip:Disconnect() end
+		if self.Connections.noclip then
+			self.Connections.noclip:Disconnect()
+			self.Connections.noclip = nil
+		end
 		local character = player.Character
 		if character then
 			for _, part in pairs(character:GetDescendants()) do
@@ -268,6 +316,7 @@ function PrisonTool:ToggleNoClip()
 	end
 end
 
+-- ==================== ПРИЗРАК ====================
 function PrisonTool:ToggleGhost()
 	if not KeySystem:IsValid() then return end
 	self.GhostEnabled = not self.GhostEnabled
@@ -275,66 +324,98 @@ function PrisonTool:ToggleGhost()
 	if character then
 		for _, part in pairs(character:GetDescendants()) do
 			if part:IsA("BasePart") then
-				part.Transparency = self.GhostEnabled and 0.8 or 0
+				part.Transparency = self.GhostEnabled and 0.7 or 0
 			end
 		end
 	end
 end
 
+-- ==================== UI: ПЕРЕТАСКИВАНИЕ ====================
+local function makeDraggable(frame, dragBar)
+	local dragging = false
+	local dragStart = nil
+	local startPos = nil
+
+	dragBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+			UserInputService.WindowFocused:Connect(function()
+				if not dragging then return end
+				local delta = UserInputService:GetMouseLocation() - dragStart
+				frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			end)
+		end
+	end)
+
+	dragBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+end
+
+-- ==================== UI: СОЗДАНИЕ ====================
 function PrisonTool:CreateModernUI()
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "RbxlCheatsPrison"
-	screenGui.Parent = player.PlayerGui
+	screenGui.Name = "RbxlCheats_v2.1"
+	screenGui.Parent = player:WaitForChild("PlayerGui")
 	screenGui.ResetOnSpawn = false
+	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	local mainContainer = Instance.new("Frame")
-	mainContainer.Size = UDim2.new(0, 650, 0, 350)
-	mainContainer.Position = UDim2.new(0.5, -325, 0.02, 0)
-	mainContainer.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
-	mainContainer.BackgroundTransparency = 0.05
+	mainContainer.Size = UDim2.new(0, 680, 0, 380)
+	mainContainer.Position = UDim2.new(0.5, -340, 0.1, 0)
+	mainContainer.BackgroundColor3 = Color3.fromRGB(18, 22, 30)
+	mainContainer.BackgroundTransparency = 0.1
 	mainContainer.BorderSizePixel = 0
 	mainContainer.Visible = false
 	mainContainer.Parent = screenGui
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
+	corner.CornerRadius = UDim.new(0, 14)
 	corner.Parent = mainContainer
 
+	-- Верхняя панель для перетаскивания
 	local topBar = Instance.new("Frame")
 	topBar.Size = UDim2.new(1, 0, 0, 40)
 	topBar.Position = UDim2.new(0, 0, 0, 0)
-	topBar.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+	topBar.BackgroundColor3 = Color3.fromRGB(28, 32, 42)
 	topBar.BorderSizePixel = 0
 	topBar.Parent = mainContainer
 
 	local topBarCorner = Instance.new("UICorner")
-	topBarCorner.CornerRadius = UDim.new(0, 12)
+	topBarCorner.CornerRadius = UDim.new(0, 14)
 	topBarCorner.Parent = topBar
 
+	-- Заголовок
 	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(0, 250, 1, 0)
+	title.Size = UDim2.new(0, 300, 1, 0)
 	title.Position = UDim2.new(0, 15, 0, 0)
 	title.BackgroundTransparency = 1
-	title.Text = "Rbxl Cheats - Prison Life"
-	title.TextColor3 = Color3.fromRGB(255, 60, 60)
-	title.TextSize = 16
-	title.Font = Enum.Font.GothamBlack
+	title.Text = "RBXL CHEATS • Prison Life " .. self.Version
+	title.TextColor3 = Color3.fromRGB(255, 80, 80)
+	title.TextSize = 15
+	title.Font = Enum.Font.GothamBold
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.Parent = topBar
 
+	-- Telegram
 	local tgLabel = Instance.new("TextLabel")
-	tgLabel.Size = UDim2.new(0, 200, 1, 0)
-	tgLabel.Position = UDim2.new(0.5, -100, 0, 0)
+	tgLabel.Size = UDim2.new(0, 180, 1, 0)
+	tgLabel.Position = UDim2.new(0.5, -90, 0, 0)
 	tgLabel.BackgroundTransparency = 1
 	tgLabel.Text = "📢 t.me/rbxlcheats"
-	tgLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
+	tgLabel.TextColor3 = Color3.fromRGB(120, 180, 255)
 	tgLabel.TextSize = 12
-	tgLabel.Font = Enum.Font.GothamBold
+	tgLabel.Font = Enum.Font.Gotham
 	tgLabel.Parent = topBar
 
+	-- Кнопки
 	local minimizeBtn = Instance.new("TextButton")
-	minimizeBtn.Size = UDim2.new(0, 30, 0, 25)
-	minimizeBtn.Position = UDim2.new(1, -65, 0.5, -12)
+	minimizeBtn.Size = UDim2.new(0, 32, 0, 26)
+	minimizeBtn.Position = UDim2.new(1, -68, 0.5, -13)
 	minimizeBtn.Text = "─"
 	minimizeBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 90)
 	minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -343,24 +424,28 @@ function PrisonTool:CreateModernUI()
 	minimizeBtn.Parent = topBar
 
 	local closeBtn = Instance.new("TextButton")
-	closeBtn.Size = UDim2.new(0, 30, 0, 25)
-	closeBtn.Position = UDim2.new(1, -30, 0.5, -12)
+	closeBtn.Size = UDim2.new(0, 32, 0, 26)
+	closeBtn.Position = UDim2.new(1, -32, 0.5, -13)
 	closeBtn.Text = "×"
-	closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+	closeBtn.BackgroundColor3 = Color3.fromRGB(190, 70, 70)
 	closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	closeBtn.TextSize = 18
 	closeBtn.Font = Enum.Font.GothamBold
 	closeBtn.Parent = topBar
 
+	-- Делаем окно перетаскиваемым
+	makeDraggable(mainContainer, topBar)
+
+	-- Контент
 	local tabContainer = Instance.new("Frame")
-	tabContainer.Size = UDim2.new(1, -20, 0, 35)
-	tabContainer.Position = UDim2.new(0, 10, 0, 45)
+	tabContainer.Size = UDim2.new(1, -20, 0, 36)
+	tabContainer.Position = UDim2.new(0, 10, 0, 48)
 	tabContainer.BackgroundTransparency = 1
 	tabContainer.Parent = mainContainer
 
 	local contentContainer = Instance.new("Frame")
-	contentContainer.Size = UDim2.new(1, -20, 0, 255)
-	contentContainer.Position = UDim2.new(0, 10, 0, 85)
+	contentContainer.Size = UDim2.new(1, -20, 0, 260)
+	contentContainer.Position = UDim2.new(0, 10, 0, 90)
 	contentContainer.BackgroundTransparency = 1
 	contentContainer.Parent = mainContainer
 
@@ -376,36 +461,18 @@ function PrisonTool:CreateModernUI()
 	visualContent.Visible = false
 	movementContent.Visible = false
 
-	local function setupControlButton(button)
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0, 6)
-		corner.Parent = button
-
-		button.MouseEnter:Connect(function()
-			TweenService:Create(button, TweenInfo.new(0.2), {
-				BackgroundColor3 = Color3.fromRGB(
-					math.min(button.BackgroundColor3.R * 255 + 30, 255),
-					math.min(button.BackgroundColor3.G * 255 + 30, 255),
-					math.min(button.BackgroundColor3.B * 255 + 30, 255)
-				)
-			}):Play()
+	-- Обработка кнопок
+	local function setupControlButton(btn, normalColor, hoverColor)
+		btn.MouseEnter:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = hoverColor}):Play()
 		end)
-
-		button.MouseLeave:Connect(function()
-			if button == minimizeBtn then
-				TweenService:Create(button, TweenInfo.new(0.2), {
-					BackgroundColor3 = Color3.fromRGB(60, 70, 90)
-				}):Play()
-			else
-				TweenService:Create(button, TweenInfo.new(0.2), {
-					BackgroundColor3 = Color3.fromRGB(180, 60, 60)
-				}):Play()
-			end
+		btn.MouseLeave:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = normalColor}):Play()
 		end)
 	end
 
-	setupControlButton(minimizeBtn)
-	setupControlButton(closeBtn)
+	setupControlButton(minimizeBtn, Color3.fromRGB(60, 70, 90), Color3.fromRGB(80, 90, 110))
+	setupControlButton(closeBtn, Color3.fromRGB(190, 70, 70), Color3.fromRGB(220, 90, 90))
 
 	mainTab.MouseButton1Click:Connect(function()
 		self:SwitchTab(mainTab, mainContent, {visualTab, movementTab}, {visualContent, movementContent})
@@ -425,9 +492,9 @@ function PrisonTool:CreateModernUI()
 	minimizeBtn.MouseButton1Click:Connect(function()
 		self.UIMinimized = not self.UIMinimized
 		if self.UIMinimized then
-			mainContainer.Size = UDim2.new(0, 650, 0, 40)
+			mainContainer.Size = UDim2.new(0, 680, 0, 40)
 		else
-			mainContainer.Size = UDim2.new(0, 650, 0, 350)
+			mainContainer.Size = UDim2.new(0, 680, 0, 380)
 		end
 	end)
 
@@ -445,13 +512,14 @@ function PrisonTool:CreateModernUI()
 	self.MainContainer = mainContainer
 end
 
+-- ==================== ВСПОМОГАТЕЛЬНЫЕ UI ФУНКЦИИ ====================
 function PrisonTool:CreateTab(name, index, parent, active)
 	local tab = Instance.new("TextButton")
 	tab.Size = UDim2.new(0.32, -5, 1, 0)
-	tab.Position = UDim2.new(0.33 * index, 0, 0, 0)
+	tab.Position = UDim2.new(0.333 * index, 0, 0, 0)
 	tab.Text = name
-	tab.BackgroundColor3 = active and Color3.fromRGB(70, 80, 120) or Color3.fromRGB(50, 60, 80)
-	tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+	tab.BackgroundColor3 = active and Color3.fromRGB(70, 85, 130) or Color3.fromRGB(50, 60, 85)
+	tab.TextColor3 = Color3.fromRGB(250, 250, 255)
 	tab.TextSize = 12
 	tab.Font = Enum.Font.GothamBold
 	tab.Parent = parent
@@ -461,18 +529,14 @@ function PrisonTool:CreateTab(name, index, parent, active)
 	corner.Parent = tab
 
 	tab.MouseEnter:Connect(function()
-		if tab.BackgroundColor3 ~= Color3.fromRGB(70, 80, 120) then
-			TweenService:Create(tab, TweenInfo.new(0.2), {
-				BackgroundColor3 = Color3.fromRGB(60, 70, 100)
-			}):Play()
+		if tab.BackgroundColor3 ~= Color3.fromRGB(70, 85, 130) then
+			TweenService:Create(tab, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 75, 110)}):Play()
 		end
 	end)
 
 	tab.MouseLeave:Connect(function()
-		if tab.BackgroundColor3 ~= Color3.fromRGB(70, 80, 120) then
-			TweenService:Create(tab, TweenInfo.new(0.2), {
-				BackgroundColor3 = Color3.fromRGB(50, 60, 80)
-			}):Play()
+		if tab.BackgroundColor3 ~= Color3.fromRGB(70, 85, 130) then
+			TweenService:Create(tab, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 60, 85)}):Play()
 		end
 	end)
 
@@ -480,11 +544,10 @@ function PrisonTool:CreateTab(name, index, parent, active)
 end
 
 function PrisonTool:SwitchTab(activeTab, activeContent, otherTabs, otherContents)
-	activeTab.BackgroundColor3 = Color3.fromRGB(70, 80, 120)
+	activeTab.BackgroundColor3 = Color3.fromRGB(70, 85, 130)
 	activeContent.Visible = true
-
 	for i, tab in ipairs(otherTabs) do
-		tab.BackgroundColor3 = Color3.fromRGB(50, 60, 80)
+		tab.BackgroundColor3 = Color3.fromRGB(50, 60, 85)
 		otherContents[i].Visible = false
 	end
 end
@@ -496,30 +559,31 @@ function PrisonTool:CreateMainTab(parent)
 	content.Parent = parent
 
 	local keyInput = Instance.new("TextBox")
-	keyInput.Size = UDim2.new(0.6, 0, 0, 35)
-	keyInput.Position = UDim2.new(0.2, 0, 0, 20)
+	keyInput.Size = UDim2.new(0.55, 0, 0, 34)
+	keyInput.Position = UDim2.new(0.22, 0, 0, 20)
 	keyInput.PlaceholderText = "Введите ключ активации..."
 	keyInput.Text = ""
-	keyInput.BackgroundColor3 = Color3.fromRGB(40, 45, 55)
+	keyInput.BackgroundColor3 = Color3.fromRGB(40, 48, 60)
 	keyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+	keyInput.ClearTextOnFocus = false
 	keyInput.Parent = content
 
 	local activateBtn = Instance.new("TextButton")
-	activateBtn.Size = UDim2.new(0.3, 0, 0, 35)
-	activateBtn.Position = UDim2.new(0.65, 0, 0, 20)
+	activateBtn.Size = UDim2.new(0.28, 0, 0, 34)
+	activateBtn.Position = UDim2.new(0.68, 0, 0, 20)
 	activateBtn.Text = "⚡ АКТИВИРОВАТЬ"
-	activateBtn.BackgroundColor3 = Color3.fromRGB(70, 150, 80)
+	activateBtn.BackgroundColor3 = Color3.fromRGB(70, 160, 90)
 	activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	activateBtn.TextSize = 12
 	activateBtn.Font = Enum.Font.GothamBold
 	activateBtn.Parent = content
 
 	local infoLabel = Instance.new("TextLabel")
-	infoLabel.Size = UDim2.new(1, -20, 0, 150)
+	infoLabel.Size = UDim2.new(1, -20, 0, 160)
 	infoLabel.Position = UDim2.new(0, 10, 0, 70)
 	infoLabel.BackgroundTransparency = 1
-	infoLabel.Text = "Rbxl Cheats - Prison Life\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats  \n\n⚡ Функции:\n• HitBox игроков с HP и расстоянием\n• Полёт по карте\n• NoClip сквозь стены\n• Режим призрака\n\n🛡️ Мощный антибан активирован\n\n⌨️ Управление:\nInsert - Открыть/Закрыть меню"
-	infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	infoLabel.Text = "Rbxl Cheats — Prison Life\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats\n\n⚡ Функции:\n• HitBox до 1500 м с HP и дистанцией\n• Полёт по карте\n• NoClip сквозь стены\n• Режим призрака\n\n🛡️ Антибан v2.1 активирован\n\n⌨️ Insert — открыть/закрыть меню"
+	infoLabel.TextColor3 = Color3.fromRGB(240, 240, 250)
 	infoLabel.TextSize = 12
 	infoLabel.Font = Enum.Font.Gotham
 	infoLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -527,15 +591,15 @@ function PrisonTool:CreateMainTab(parent)
 	infoLabel.Parent = content
 
 	activateBtn.MouseButton1Click:Connect(function()
-		local key = keyInput.Text:upper()
+		local key = keyInput.Text:upper():gsub("%s+", "")
 		if key == "" then return end
 		local success, message = KeySystem:Validate(key)
 		if success then
 			keyInput.Visible = false
 			activateBtn.Visible = false
-			infoLabel.Text = "✅ " .. message .. "\n\n⚡ Все функции разблокированы!\n\n🔴 Rbxl Cheats - Prison Life\n📢 Telegram: t.me/rbxlcheats\n🛡️ Антибан активен"
+			infoLabel.Text = "✅ " .. message .. "\n\n⚡ Все функции разблокированы!\n\n🔴 RBXL CHEATS — Prison Life " .. self.Version .. "\n📢 Telegram: t.me/rbxlcheats\n🛡️ Антибан активен"
 		else
-			infoLabel.Text = "❌ " .. message .. "\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats  "
+			infoLabel.Text = "❌ " .. message .. "\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats"
 		end
 	end)
 
@@ -548,11 +612,11 @@ function PrisonTool:CreateVisualTab(parent)
 	content.BackgroundTransparency = 1
 	content.Parent = parent
 
-	self:CreateFeatureButton("🔴 HitBox игроков", "Показывать хитбоксы с HP", 10, 10, content, function()
+	self:CreateFeatureButton("🔴 HitBox (до 1500 м)", "Показывать хитбоксы с HP и расстоянием", 10, 10, content, function()
 		self:ToggleHitBox()
 	end)
 
-	self:CreateFeatureButton("👻 Режим призрака", "Полупрозрачность", 10, 60, content, function()
+	self:CreateFeatureButton("👻 Режим призрака", "Сделать персонажа полупрозрачным", 10, 60, content, function()
 		self:ToggleGhost()
 	end)
 
@@ -565,20 +629,20 @@ function PrisonTool:CreateMovementTab(parent)
 	content.BackgroundTransparency = 1
 	content.Parent = parent
 
-	self:CreateFeatureButton("🦅 Полёт", "Летать в воздухе", 10, 10, content, function()
+	self:CreateFeatureButton("🦅 Полёт", "Свободное перемещение в воздухе", 10, 10, content, function()
 		self:ToggleFly()
 	end)
 
-	self:CreateFeatureButton("👻 NoClip", "Проходить сквозь стены", 10, 60, content, function()
+	self:CreateFeatureButton("👻 NoClip", "Проходить сквозь любые объекты", 10, 60, content, function()
 		self:ToggleNoClip()
 	end)
 
 	return content
 end
 
-function PrisonTool:CreateFeatureButton(name, tooltip, x, y, parent, callback)
+function PrisonTool:CreateFeatureButton(name, desc, x, y, parent, callback)
 	local buttonFrame = Instance.new("Frame")
-	buttonFrame.Size = UDim2.new(0.45, 0, 0, 40)
+	buttonFrame.Size = UDim2.new(0.45, 0, 0, 42)
 	buttonFrame.Position = UDim2.new(0, x, 0, y)
 	buttonFrame.BackgroundTransparency = 1
 	buttonFrame.Parent = parent
@@ -586,8 +650,8 @@ function PrisonTool:CreateFeatureButton(name, tooltip, x, y, parent, callback)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(1, 0, 1, 0)
 	button.Text = name
-	button.BackgroundColor3 = Color3.fromRGB(60, 70, 90)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.BackgroundColor3 = Color3.fromRGB(55, 65, 85)
+	button.TextColor3 = Color3.fromRGB(250, 250, 255)
 	button.TextSize = 12
 	button.Font = Enum.Font.GothamBold
 	button.Parent = buttonFrame
@@ -597,40 +661,46 @@ function PrisonTool:CreateFeatureButton(name, tooltip, x, y, parent, callback)
 	corner.Parent = button
 
 	button.MouseEnter:Connect(function()
-		TweenService:Create(button, TweenInfo.new(0.2), {
-			BackgroundColor3 = Color3.fromRGB(80, 90, 110)
-		}):Play()
+		TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(75, 85, 105)}):Play()
 	end)
 
 	button.MouseLeave:Connect(function()
-		TweenService:Create(button, TweenInfo.new(0.2), {
-			BackgroundColor3 = Color3.fromRGB(60, 70, 90)
-		}):Play()
+		TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55, 65, 85)}):Play()
 	end)
 
 	button.MouseButton1Click:Connect(callback)
 
+	-- Описание (необязательно, но улучшает UX)
+	local descLabel = Instance.new("TextLabel")
+	descLabel.Size = UDim2.new(1, 0, 0, 14)
+	descLabel.Position = UDim2.new(0, 0, 1, -14)
+	descLabel.BackgroundTransparency = 1
+	descLabel.Text = desc
+	descLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
+	descLabel.TextSize = 9
+	descLabel.Font = Enum.Font.Gotham
+	descLabel.Parent = button
+
 	return button
 end
 
--- ✅ ЗАЩИТА СКРИПТА И ИНИЦИАЛИЗАЦИЯ GUI ПОСЛЕ ЗАГРУЗКИ ПЕРСОНАЖА
+-- ==================== ИНИЦИАЛИЗАЦИЯ ====================
 AntiBan:ProtectScript()
 
-local function initGUI()
-	if not PrisonTool.GUIInitialized then
-		PrisonTool:CreateModernUI()
-		PrisonTool.GUIInitialized = true
-	end
+local function init()
+	if PrisonTool.GUIInitialized then return end
+	PrisonTool.GUIInitialized = true
+	PrisonTool:CreateModernUI()
 end
 
 if player.Character then
-	initGUI()
+	init()
 else
-	player.CharacterAdded:Connect(initGUI)
+	player.CharacterAdded:Connect(init)
 end
 
-print("Rbxl Cheats - Prison Life загружен!")
-print("📢 Telegram: https://t.me/rbxlcheats")
-print("🔑 Ключ: PRISON-LIFE-FREE") -- ✅ Совпадает с _validKey
-print("🛡️ Антибан система активирована")
-print("⌨️ Insert - открыть/закрыть меню")
+print("✅ RBXL CHEATS — Prison Life " .. PrisonTool.Version .. " загружен!")
+print("📢 Официальный канал: https://t.me/rbxlcheats")
+print("🔑 Ключ активации: PRISON-LIFE-FREE")
+print("🛡️ Антибан и оптимизация включены")
+print("⌨️ Нажмите Insert, чтобы открыть меню")
