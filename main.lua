@@ -6,7 +6,7 @@ local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 local KeySystem = {
-	_validKey = "PRISON-LIFE-FREE",
+	_validKey = "PRISON-LIFE-FREE", -- ✅ Ключ для активации
 	_activated = false
 }
 
@@ -69,7 +69,8 @@ local PrisonTool = {
 	BodyVelocity = nil,
 	Connections = {},
 	UIMinimized = false,
-	CurrentTab = "main"
+	CurrentTab = "main",
+	GUIInitialized = false -- ✅ Флаг для предотвращения дублирования GUI
 }
 
 function PrisonTool:ToggleHitBox()
@@ -517,7 +518,7 @@ function PrisonTool:CreateMainTab(parent)
 	infoLabel.Size = UDim2.new(1, -20, 0, 150)
 	infoLabel.Position = UDim2.new(0, 10, 0, 70)
 	infoLabel.BackgroundTransparency = 1
-	infoLabel.Text = "Rbxl Cheats - Prison Life\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats\n\n⚡ Функции:\n• HitBox игроков с HP и расстоянием\n• Полёт по карте\n• NoClip сквозь стены\n• Режим призрака\n\n🛡️ Мощный антибан активирован\n\n⌨️ Управление:\nInsert - Открыть/Закрыть меню"
+	infoLabel.Text = "Rbxl Cheats - Prison Life\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats  \n\n⚡ Функции:\n• HitBox игроков с HP и расстоянием\n• Полёт по карте\n• NoClip сквозь стены\n• Режим призрака\n\n🛡️ Мощный антибан активирован\n\n⌨️ Управление:\nInsert - Открыть/Закрыть меню"
 	infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	infoLabel.TextSize = 12
 	infoLabel.Font = Enum.Font.Gotham
@@ -534,7 +535,7 @@ function PrisonTool:CreateMainTab(parent)
 			activateBtn.Visible = false
 			infoLabel.Text = "✅ " .. message .. "\n\n⚡ Все функции разблокированы!\n\n🔴 Rbxl Cheats - Prison Life\n📢 Telegram: t.me/rbxlcheats\n🛡️ Антибан активен"
 		else
-			infoLabel.Text = "❌ " .. message .. "\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats"
+			infoLabel.Text = "❌ " .. message .. "\n\n📢 Получите ключ в Telegram:\nhttps://t.me/rbxlcheats  "
 		end
 	end)
 
@@ -612,11 +613,24 @@ function PrisonTool:CreateFeatureButton(name, tooltip, x, y, parent, callback)
 	return button
 end
 
+-- ✅ ЗАЩИТА СКРИПТА И ИНИЦИАЛИЗАЦИЯ GUI ПОСЛЕ ЗАГРУЗКИ ПЕРСОНАЖА
 AntiBan:ProtectScript()
-PrisonTool:CreateModernUI()
+
+local function initGUI()
+	if not PrisonTool.GUIInitialized then
+		PrisonTool:CreateModernUI()
+		PrisonTool.GUIInitialized = true
+	end
+end
+
+if player.Character then
+	initGUI()
+else
+	player.CharacterAdded:Connect(initGUI)
+end
 
 print("Rbxl Cheats - Prison Life загружен!")
 print("📢 Telegram: https://t.me/rbxlcheats")
-print("🔑 Ключ: PRISON-PRO-2024-VIP")
+print("🔑 Ключ: PRISON-LIFE-FREE") -- ✅ Совпадает с _validKey
 print("🛡️ Антибан система активирована")
 print("⌨️ Insert - открыть/закрыть меню")
